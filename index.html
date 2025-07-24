@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#74c69d">
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <title>PiantaMy - Registro di Crescita</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0fdf4;
+      color: #1b4332;
+    }
+    h1 {
+      text-align: center;
+      color: #2d6a4f;
+    }
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 400px;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #a3b18a;
+      border-radius: 8px;
+    }
+    button {
+      background-color: #95d5b2;
+      color: #1b4332;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #74c69d;
+    }
+    .entry {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .entry img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+    .delete-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      font-size: 0.8em;
+      background-color: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .delete-button:hover {
+      background-color: #d9534f;
+    }
+  </style>
+</head>
+<body>
+  <h1>PiantaMy 🌱</h1>
+  <div class="form">
+    <input type="text" id="plantname" placeholder="Nome della Pianta" />
+    <input type="text" id="date" placeholder="Data (es. 24/07/2025)" />
+    <input type="number" id="height" placeholder="Altezza (cm)" />
+    <input type="number" id="leaves" placeholder="Numero di foglie" />
+    <textarea id="notes" placeholder="Note"></textarea>
+    <input type="file" id="photo" accept="image/*" />
+    <button onclick="saveEntry()">Salva</button>
+  </div>
+  <div id="entries"></div>
+
+  <script>
+    function saveEntry() {
+      const plantname = document.getElementById("plantname").value;
+      const date = document.getElementById("date").value;
+      const height = document.getElementById("height").value;
+      const leaves = document.getElementById("leaves").value;
+      const notes = document.getElementById("notes").value;
+      const photoInput = document.getElementById("photo");
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        const entry = {
+          plantname,
+          date,
+          height,
+          leaves,
+          notes,
+          photo: reader.result,
+        };
+        const entries = JSON.parse(localStorage.getItem("entries") || "[]");
+        entries.push(entry);
+        localStorage.setItem("entries", JSON.stringify(entries));
+        showEntries();
+        notify("Salvataggio effettuato 🌿");
+      };
+
+      if (photoInput.files[0]) {
+        reader.readAsDataURL(photoInput.files[0]);
+      } else {
+        reader.onload();
+      }
+    }
+
+    function showEntries() {
+      const entries = JSON.parse(localStorage.getItem("entries") || "[]");
+      const entriesDiv = document.getElementById("entries");
+      entriesDiv.innerHTML = "";
+      entries.forEach((entry, index) => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `
+          <button class="delete-button" onclick="deleteEntry(${index})">Elimina</button>
+          <strong>${entry.date}</strong> - <em>${entry.plantname}</em><br>
+          🌿 Altezza: ${entry.height} cm<br>
+          🍃 Foglie: ${entry.leaves}<br>
+          📝 Note: ${entry.notes}<br>
+          ${entry.photo ? `<img src="${entry.photo}" alt="foto pianta" />` : ""}
+        `;
+        entriesDiv.appendChild(div);
+      });
+    }
+
+    function deleteEntry(index) {
+      const entries = JSON.parse(localStorage.getItem("entries") || "[]");
+      entries.splice(index, 1);
+      localStorage.setItem("entries", JSON.stringify(entries));
+      showEntries();
+    }
+
+    function notify(message) {
+      if (Notification.permission === "granted") {
+        new Notification(message);
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") new Notification(message);
+        });
+      }
+    }
+
+    showEntries();
+  </script>
+</body>
+</html>
